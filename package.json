@@ -1,0 +1,49 @@
+{
+  "name": "unused-webpack-plugin",
+  "version": "1.0.0",
+  "description": "Плагин позволяет обнаружить неиспользованные при сборке файлы и получить их список",
+  "main": "dist/index.js",
+  "private": true,
+  "scripts": {
+    "build": "shx rm -rf dist && tsc --build ./tsconfig.prod.json",
+    "dev": "shx rm -rf dist && tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "test": "npm run lint && tsc --pretty --noEmit",
+    "sample": "webpack -c sample/webpack.config.js",
+    "prepare": "husky install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/i-kosh/unused-webpack-plugin.git"
+  },
+  "author": "Igor Koshelev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/i-kosh/unused-webpack-plugin/issues"
+  },
+  "homepage": "https://github.com/i-kosh/unused-webpack-plugin#readme",
+  "lint-staged": {
+    "*.{js,ts}": "eslint --cache --fix",
+    "*.{js,ts,json,md}": "prettier --write"
+  },
+  "devDependencies": {
+    "@tsconfig/node14": "^1.0.1",
+    "@types/micromatch": "^4.0.1",
+    "@types/node": "^14.17.4",
+    "@typescript-eslint/eslint-plugin": "^4.28.1",
+    "@typescript-eslint/parser": "^4.28.1",
+    "eslint": "^7.29.0",
+    "eslint-config-prettier": "^8.3.0",
+    "husky": "^6.0.0",
+    "lint-staged": "^11.0.0",
+    "prettier": "^2.3.2",
+    "shx": "^0.3.3",
+    "typescript": "^4.3.4",
+    "webpack": "^5.41.0",
+    "webpack-cli": "^4.7.2"
+  },
+  "dependencies": {
+    "micromatch": "^4.0.4",
+    "schema-utils": "^3.0.0"
+  }
+}
