@@ -131,7 +131,7 @@ export class UnusedPlugin {
             const dir = parse(path).dir
             wait.push(this.parseDirectory(dir))
           } else {
-            const dir = resolve(compiler.context, path)
+            const dir = parse(resolve(compiler.context, path)).dir
             wait.push(this.parseDirectory(dir))
           }
         })
