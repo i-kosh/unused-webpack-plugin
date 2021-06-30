@@ -14,6 +14,30 @@ interface ConstructorParams {
   outputFile?: string
 }
 
+const callValidator = (params?: ConstructorParams, pluginName?: string) => {
+  validate(
+    {
+      type: 'object',
+      properties: {
+        exclude: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+        },
+        outputFile: {
+          type: 'string',
+        },
+      },
+    },
+    params || {},
+    {
+      name: pluginName,
+      baseDataPath: 'params',
+    }
+  )
+}
+
 export class UnusedPlugin {
   private pluginName: string
   private usedFilesList: Set<string>
@@ -26,29 +50,6 @@ export class UnusedPlugin {
   constructor(params?: ConstructorParams) {
     this.pluginName = 'UnusedPlugin'
     this.defaultFileName = 'unused.json'
-
-    validate(
-      {
-        type: 'object',
-        properties: {
-          exclude: {
-            type: 'array',
-            items: {
-              type: 'string',
-            },
-          },
-          outputFile: {
-            type: 'string',
-          },
-        },
-      },
-      params || {},
-      {
-        name: this.pluginName,
-        baseDataPath: 'params',
-      }
-    )
-
     this.usedFilesList = new Set()
     this.filesList = new Set()
     this.excludeGlobs = [
@@ -57,6 +58,9 @@ export class UnusedPlugin {
       '**/.*',
       `**/${this.defaultFileName}`,
     ]
+
+    // Start using params
+    callValidator(params, this.pluginName)
 
     if (params?.exclude) {
       this.excludeGlobs.push(...params.exclude)
