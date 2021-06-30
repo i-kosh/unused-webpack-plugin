@@ -1,5 +1,5 @@
 import type { Compiler } from 'webpack'
-import { isAbsolute, parse, resolve } from 'path'
+import { isAbsolute, parse, resolve, relative } from 'path'
 import { readdir, stat, writeFile } from 'fs/promises'
 import { isMatch } from 'micromatch'
 import { validate } from 'schema-utils'
@@ -20,6 +20,7 @@ export class UnusedPlugin {
   private excludeGlobs: string[]
   private outputFile?: string
   private defaultFileName: string
+  private webpackCtx?: string
 
   constructor(params?: ConstructorParams) {
     this.pluginName = 'UnusedPlugin'
@@ -62,6 +63,20 @@ export class UnusedPlugin {
     if (params?.outputFile) {
       this.outputFile = params.outputFile
     }
+  }
+
+  get relativeFilesList(): string[] {
+    const arr: string[] = []
+
+    this.filesList.forEach((file) => {
+      if (!this.webpackCtx) {
+        throw new Error('Dont read relativeFilesList before the apply method')
+      }
+
+      arr.push(relative(this.webpackCtx, file))
+    })
+
+    return arr
   }
 
   private async parseDirectory(path: string): Promise<string[]> {
@@ -135,6 +150,10 @@ export class UnusedPlugin {
   }
 
   public apply(compiler: Compiler): void {
+    this.webpackCtx = compiler.context
+    this.outputFile =
+      this.outputFile || resolve(compiler.context, this.defaultFileName)
+
     const collectFilesPromise = this.collectFilesPaths(compiler)
 
     compiler.hooks.compilation.tap(this.pluginName, (compilation) => {
@@ -152,11 +171,11 @@ export class UnusedPlugin {
             this.filesList.delete(usedPath)
           })
 
-          const pathToFile = this.outputFile
-            ? this.outputFile
-            : resolve(compiler.context, this.defaultFileName)
+          if (!this.outputFile) {
+            throw new Error('this.outputFile must exist at this moment')
+          }
 
-          await this.emitToFile(pathToFile, this.filesList)
+          await this.emitToFile(this.outputFile, this.relativeFilesList)
 
           cb()
         } catch (error) {
