@@ -69,13 +69,13 @@ export class UnusedPlugin {
 
   get relativeFilesList(): string[] {
     const arr: string[] = []
+    const webpackCtx = this.webpackCtx
+    if (!webpackCtx) {
+      throw new Error('Dont read relativeFilesList before the apply method')
+    }
 
     this.filesList.forEach((file) => {
-      if (!this.webpackCtx) {
-        throw new Error('Dont read relativeFilesList before the apply method')
-      }
-
-      arr.push(relative(this.webpackCtx, file))
+      arr.push(relative(webpackCtx, file))
     })
 
     return arr
