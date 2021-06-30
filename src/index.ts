@@ -4,6 +4,7 @@ import { readdir, stat, writeFile } from 'fs/promises'
 import { isMatch } from 'micromatch'
 import { validate } from 'schema-utils'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isIterable = (iterable: any): iterable is Iterable<any> => {
   return iterable && iterable[Symbol.iterator]
 }
