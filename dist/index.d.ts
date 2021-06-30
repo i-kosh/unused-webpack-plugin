@@ -10,7 +10,9 @@ export declare class UnusedPlugin {
     private excludeGlobs;
     private outputFile?;
     private defaultFileName;
+    private webpackCtx?;
     constructor(params?: ConstructorParams);
+    get relativeFilesList(): string[];
     private parseDirectory;
     private collectFilesPaths;
     private emitToFile;

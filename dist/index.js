@@ -80,6 +80,21 @@ var UnusedPlugin = (function () {
             this.outputFile = params.outputFile;
         }
     }
+    Object.defineProperty(UnusedPlugin.prototype, "relativeFilesList", {
+        get: function () {
+            var _this = this;
+            var arr = [];
+            this.filesList.forEach(function (file) {
+                if (!_this.webpackCtx) {
+                    throw new Error('Dont read relativeFilesList before the apply method');
+                }
+                arr.push(path_1.relative(_this.webpackCtx, file));
+            });
+            return arr;
+        },
+        enumerable: false,
+        configurable: true
+    });
     UnusedPlugin.prototype.parseDirectory = function (path) {
         return __awaiter(this, void 0, void 0, function () {
             var files, dirEntrys, fileOrDirStat, fileOrDirStatPathMap, stats, recursivePaths, recursivePathsResolved;
@@ -185,6 +200,9 @@ var UnusedPlugin = (function () {
     };
     UnusedPlugin.prototype.apply = function (compiler) {
         var _this = this;
+        this.webpackCtx = compiler.context;
+        this.outputFile =
+            this.outputFile || path_1.resolve(compiler.context, this.defaultFileName);
         var collectFilesPromise = this.collectFilesPaths(compiler);
         compiler.hooks.compilation.tap(this.pluginName, function (compilation) {
             compilation.hooks.buildModule.tap(_this.pluginName, function (module) {
@@ -192,7 +210,7 @@ var UnusedPlugin = (function () {
             });
         });
         compiler.hooks.finishMake.tapAsync(this.pluginName, function (compilation, cb) { return __awaiter(_this, void 0, void 0, function () {
-            var pathToFile, error_1;
+            var error_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -204,10 +222,10 @@ var UnusedPlugin = (function () {
                         this.usedFilesList.forEach(function (usedPath) {
                             _this.filesList.delete(usedPath);
                         });
-                        pathToFile = this.outputFile
-                            ? this.outputFile
-                            : path_1.resolve(compiler.context, this.defaultFileName);
-                        return [4, this.emitToFile(pathToFile, this.filesList)];
+                        if (!this.outputFile) {
+                            throw new Error('this.outputFile must exist at this moment');
+                        }
+                        return [4, this.emitToFile(this.outputFile, this.relativeFilesList)];
                     case 2:
                         _a.sent();
                         cb();
