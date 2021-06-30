@@ -52,6 +52,7 @@ export class UnusedPlugin {
     this.filesList = new Set()
     this.excludeGlobs = [
       '**/node_modules',
+      '**/node_modules/**',
       '**/.*',
       `**/${this.defaultFileName}`,
     ]
