@@ -157,17 +157,18 @@ export class UnusedPlugin {
 
     const collectFilesPromise = this.collectFilesPaths(compiler)
 
-    compiler.hooks.compilation.tap(this.pluginName, (compilation) => {
-      compilation.hooks.buildModule.tap(this.pluginName, (module) => {
-        this.usedFilesList.add(module.identifier())
-      })
-    })
-
-    compiler.hooks.finishMake.tapAsync(
+    compiler.hooks.afterEmit.tapAsync(
       this.pluginName,
       async (compilation, cb) => {
         try {
+          compilation.fileDependencies.forEach((path) => {
+            if (!isMatch(path, this.excludeGlobs)) {
+              this.usedFilesList.add(path)
+            }
+          })
+
           await collectFilesPromise
+
           this.usedFilesList.forEach((usedPath) => {
             this.filesList.delete(usedPath)
           })
@@ -177,7 +178,6 @@ export class UnusedPlugin {
           }
 
           await this.emitToFile(this.outputFile, this.relativeFilesList)
-
           cb()
         } catch (error) {
           cb(error)
