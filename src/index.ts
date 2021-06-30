@@ -152,9 +152,10 @@ export class UnusedPlugin {
   }
 
   public apply(compiler: Compiler): void {
-    this.webpackCtx = compiler.context
-    this.outputFile =
+    const outputFile =
       this.outputFile || resolve(compiler.context, this.defaultFileName)
+    this.outputFile = outputFile
+    this.webpackCtx = compiler.context
 
     const collectFilesPromise = this.collectFilesPaths(compiler)
 
@@ -174,11 +175,7 @@ export class UnusedPlugin {
             this.filesList.delete(usedPath)
           })
 
-          if (!this.outputFile) {
-            throw new Error('this.outputFile must exist at this moment')
-          }
-
-          await this.emitToFile(this.outputFile, this.relativeFilesList)
+          await this.emitToFile(outputFile, this.relativeFilesList)
           cb()
         } catch (error) {
           cb(error)
