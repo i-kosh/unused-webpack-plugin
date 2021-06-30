@@ -44,35 +44,39 @@ var schema_utils_1 = require("schema-utils");
 var isIterable = function (iterable) {
     return iterable && iterable[Symbol.iterator];
 };
+var callValidator = function (params, pluginName) {
+    schema_utils_1.validate({
+        type: 'object',
+        properties: {
+            exclude: {
+                type: 'array',
+                items: {
+                    type: 'string',
+                },
+            },
+            outputFile: {
+                type: 'string',
+            },
+        },
+    }, params || {}, {
+        name: pluginName,
+        baseDataPath: 'params',
+    });
+};
 var UnusedPlugin = (function () {
     function UnusedPlugin(params) {
         var _a;
         this.pluginName = 'UnusedPlugin';
         this.defaultFileName = 'unused.json';
-        schema_utils_1.validate({
-            type: 'object',
-            properties: {
-                exclude: {
-                    type: 'array',
-                    items: {
-                        type: 'string',
-                    },
-                },
-                outputFile: {
-                    type: 'string',
-                },
-            },
-        }, params || {}, {
-            name: this.pluginName,
-            baseDataPath: 'params',
-        });
         this.usedFilesList = new Set();
         this.filesList = new Set();
         this.excludeGlobs = [
             '**/node_modules',
+            '**/node_modules/**',
             '**/.*',
             "**/" + this.defaultFileName,
         ];
+        callValidator(params, this.pluginName);
         if (params === null || params === void 0 ? void 0 : params.exclude) {
             (_a = this.excludeGlobs).push.apply(_a, params.exclude);
         }
@@ -82,13 +86,13 @@ var UnusedPlugin = (function () {
     }
     Object.defineProperty(UnusedPlugin.prototype, "relativeFilesList", {
         get: function () {
-            var _this = this;
             var arr = [];
+            var webpackCtx = this.webpackCtx;
+            if (!webpackCtx) {
+                throw new Error('Dont read relativeFilesList before the apply method');
+            }
             this.filesList.forEach(function (file) {
-                if (!_this.webpackCtx) {
-                    throw new Error('Dont read relativeFilesList before the apply method');
-                }
-                arr.push(path_1.relative(_this.webpackCtx, file));
+                arr.push(path_1.relative(webpackCtx, file));
             });
             return arr;
         },
@@ -168,7 +172,7 @@ var UnusedPlugin = (function () {
                                         wait.push(_this.parseDirectory(dir));
                                     }
                                     else {
-                                        var dir = path_1.resolve(compiler.context, path);
+                                        var dir = path_1.parse(path_1.resolve(compiler.context, path)).dir;
                                         wait.push(_this.parseDirectory(dir));
                                     }
                                 });
@@ -200,32 +204,29 @@ var UnusedPlugin = (function () {
     };
     UnusedPlugin.prototype.apply = function (compiler) {
         var _this = this;
+        var outputFile = this.outputFile || path_1.resolve(compiler.context, this.defaultFileName);
+        this.outputFile = outputFile;
         this.webpackCtx = compiler.context;
-        this.outputFile =
-            this.outputFile || path_1.resolve(compiler.context, this.defaultFileName);
         var collectFilesPromise = this.collectFilesPaths(compiler);
-        compiler.hooks.compilation.tap(this.pluginName, function (compilation) {
-            compilation.hooks.buildModule.tap(_this.pluginName, function (module) {
-                _this.usedFilesList.add(module.identifier());
-            });
-        });
-        compiler.hooks.finishMake.tapAsync(this.pluginName, function (compilation, cb) { return __awaiter(_this, void 0, void 0, function () {
+        compiler.hooks.afterEmit.tapAsync(this.pluginName, function (compilation, cb) { return __awaiter(_this, void 0, void 0, function () {
             var error_1;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 3, , 4]);
+                        compilation.fileDependencies.forEach(function (path) {
+                            if (!micromatch_1.isMatch(path, _this.excludeGlobs)) {
+                                _this.usedFilesList.add(path);
+                            }
+                        });
                         return [4, collectFilesPromise];
                     case 1:
                         _a.sent();
                         this.usedFilesList.forEach(function (usedPath) {
                             _this.filesList.delete(usedPath);
                         });
-                        if (!this.outputFile) {
-                            throw new Error('this.outputFile must exist at this moment');
-                        }
-                        return [4, this.emitToFile(this.outputFile, this.relativeFilesList)];
+                        return [4, this.emitToFile(outputFile, this.relativeFilesList)];
                     case 2:
                         _a.sent();
                         cb();

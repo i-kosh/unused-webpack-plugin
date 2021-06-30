@@ -1,6 +1,6 @@
 {
   "name": "unused-webpack-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Плагин позволяет обнаружить неиспользованные при сборке файлы и получить их список",
   "main": "dist/index.js",
   "private": true,
